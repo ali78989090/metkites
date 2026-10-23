@@ -32,10 +32,11 @@ export function Footer() {
         <div>
           <h3 className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Help</h3>
             <ul className="mt-3 space-y-1.5 text-sm text-white/80">
-              <li><Link className="hover:text-brand" to="/how-pre-orders-work">How pre-orders work</Link></li>
-              <li><Link className="hover:text-brand" to="/track">Track your pre-order</Link></li>
-              <li><Link className="hover:text-brand" to="/account">My orders</Link></li>
-              <li><Link className="hover:text-brand" to="/login">Login / Register</Link></li>
+              <li><Link className="hover:text-rose-400" to="/how-pre-orders-work">How pre-orders work</Link></li>
+              <li><Link className="hover:text-rose-400" to="/track">Track your pre-order</Link></li>
+              <li><Link className="hover:text-rose-400" to="/account">My orders</Link></li>
+              <li><Link className="hover:text-rose-400" to="/login">Client Login</Link></li>
+              <li><Link className="hover:text-rose-400 font-medium text-rose-400/90" to="/admin/login">🔒 Staff Admin Portal</Link></li>
             </ul>
         </div>
 

@@ -3,12 +3,14 @@
 @plugin "tailwindcss-animate";
 
 @theme {
-  --color-brand: #e30613;
-  --color-brand-dark: #b00410;
-  --color-brand-soft: #fdecec;
-  --color-ink: #111111;
-  --color-charcoal: #242424;
-  --color-mist: #f4f4f5;
+  --color-brand: #e11d48;
+  --color-brand-dark: #be123c;
+  --color-brand-soft: #ffe4e6;
+  --color-ink: #09090b;
+  --color-charcoal: #18181b;
+  --color-mist: #f8fafc;
+  --color-purple-accent: #6b21a8;
+  --color-purple-dark: #190838;
   --font-display: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -39,7 +41,7 @@
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -62,15 +64,15 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 bg-brand text-white hover:bg-brand-dark;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 bg-brand text-white shadow-sm shadow-rose-600/25 hover:bg-brand-dark hover:shadow-md hover:shadow-rose-600/40 active:scale-[0.98];
   }
 
   .btn-dark {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 bg-ink text-white hover:bg-charcoal;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 bg-ink text-white shadow-sm hover:bg-charcoal active:scale-[0.98];
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 border border-ink/15 bg-white text-ink hover:border-ink/40 hover:bg-mist;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 border border-ink/15 bg-white text-ink hover:border-ink/40 hover:bg-mist active:scale-[0.98];
   }
 
   .btn-ghost {
@@ -192,4 +194,59 @@
 .animate-gold-pulse {
   animation: goldPulse 3s ease-in-out infinite;
 }
+
+/* Dor Pinna (Spool) Animations */
+@keyframes pinnaFloat1 {
+  0%, 100% {
+    transform: translateY(0px) rotate(-12deg) scale(1);
+  }
+  50% {
+    transform: translateY(-22px) rotate(8deg) scale(1.04);
+  }
+}
+
+@keyframes pinnaFloat2 {
+  0%, 100% {
+    transform: translateY(0px) rotate(15deg) scale(0.96);
+  }
+  50% {
+    transform: translateY(-26px) rotate(-6deg) scale(1.02);
+  }
+}
+
+@keyframes threadFlutter {
+  0%, 100% {
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dashoffset: 12;
+  }
+}
+
+.animate-pinna-1 {
+  animation: pinnaFloat1 8s ease-in-out infinite;
+}
+
+.animate-pinna-2 {
+  animation: pinnaFloat2 9.5s ease-in-out infinite;
+}
+
+.animate-thread {
+  animation: threadFlutter 2.5s linear infinite;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.glass-panel-dark {
+  background: rgba(14, 5, 28, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 

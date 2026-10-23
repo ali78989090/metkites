@@ -261,31 +261,34 @@ export interface SeedResult {
 }
 
 function seedAdmin(): SeedResult {
-  const existingAdmin = get("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
-  if (existingAdmin) return { adminCreated: false, adminEmail: config.admin.email };
+  const targetEmail = config.admin.email;
+  const targetPassword = config.admin.password || "03262577882";
+  const targetName = config.admin.name || "Ebad (Admin)";
+  const existing = get<{ id: string }>("SELECT id FROM users WHERE email = ?", targetEmail);
 
-  let password = config.admin.password;
-  let generated = false;
-  if (!password) {
-    // No password configured: generate a strong one and print it once.
-    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-    const bytes = crypto.randomBytes(16);
-    password = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-    generated = true;
+  if (existing) {
+    run(
+      `UPDATE users SET role = 'admin', full_name = ?, password_hash = ?, updated_at = ? WHERE id = ?`,
+      targetName,
+      hashPassword(targetPassword),
+      nowIso(),
+      existing.id,
+    );
+    return { adminCreated: false, adminEmail: targetEmail };
   }
 
   run(
     `INSERT INTO users (id, full_name, email, phone, password_hash, role, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'admin', ?, ?)`,
-    id("usr", config.admin.email),
-    config.admin.name,
-    config.admin.email,
+    id("usr", targetEmail),
+    targetName,
+    targetEmail,
     null,
-    hashPassword(password),
+    hashPassword(targetPassword),
     nowIso(),
     nowIso(),
   );
-  return { adminCreated: true, adminEmail: config.admin.email, generatedPassword: generated ? password : undefined };
+  return { adminCreated: true, adminEmail: targetEmail };
 }
 
 export function seedCatalog(): void {

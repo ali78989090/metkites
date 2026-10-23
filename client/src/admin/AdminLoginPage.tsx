@@ -49,27 +49,27 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="flex min-h-[85vh] items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 px-4 py-12">
+    <div className="flex min-h-[85vh] items-center justify-center bg-gradient-to-br from-[#0a0518] via-[#140728] to-[#090214] px-4 py-12">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/90 p-8 shadow-2xl backdrop-blur-xl">
           {/* Subtle Glow */}
-          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-amber-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 -left-20 size-48 rounded-full bg-purple-600/20 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-rose-600/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-20 size-48 rounded-full bg-purple-900/25 blur-3xl" />
 
           {/* Header */}
           <div className="relative flex flex-col items-center text-center">
-            <div className="flex size-16 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-500/10 text-amber-400 shadow-inner">
+            <div className="flex size-16 items-center justify-center rounded-2xl border border-rose-500/30 bg-rose-500/10 text-rose-500 shadow-inner">
               <ShieldCheck className="size-9" />
             </div>
-            <div className="mt-3 flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+            <div className="mt-3 flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-300">
               <Lock className="size-3" />
-              Staff & Administrator Portal
+              Staff &amp; Administrator Portal
             </div>
             <h1 className="mt-3 font-display text-2xl font-black text-white sm:text-3xl">
               Admin Sign In
             </h1>
-            <p className="mt-1.5 text-xs text-slate-400">
+            <p className="mt-1.5 text-xs text-zinc-400">
               Metro Lahore Kites — Secure Management Console
             </p>
           </div>
@@ -78,7 +78,7 @@ export function AdminLoginPage() {
           <form onSubmit={handleSubmit} noValidate className="relative mt-7 space-y-4">
             {errors.form && (
               <div
-                className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-300"
+                className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-300"
                 role="alert"
               >
                 {errors.form}
@@ -90,11 +90,11 @@ export function AdminLoginPage() {
                 id="admin-email"
                 type="email"
                 autoComplete="email"
-                placeholder="admin@metrolahorekites.pk"
+                placeholder="ebad@gmail.com"
                 value={email}
                 invalid={Boolean(errors.email)}
                 onChange={(event) => setEmail(event.target.value)}
-                className="border-slate-700 bg-slate-800/80 text-white placeholder:text-slate-500 focus:border-amber-400 focus:ring-amber-400/25"
+                className="border-zinc-800 bg-zinc-900/90 text-white placeholder:text-zinc-500 focus:border-rose-500 focus:ring-rose-500/25"
                 required
               />
             </Field>
@@ -108,7 +108,7 @@ export function AdminLoginPage() {
                 value={password}
                 invalid={Boolean(errors.password)}
                 onChange={(event) => setPassword(event.target.value)}
-                className="border-slate-700 bg-slate-800/80 text-white placeholder:text-slate-500 focus:border-amber-400 focus:ring-amber-400/25"
+                className="border-zinc-800 bg-zinc-900/90 text-white placeholder:text-zinc-500 focus:border-rose-500 focus:ring-rose-500/25"
                 required
               />
             </Field>
@@ -116,11 +116,11 @@ export function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-50"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 py-3 text-sm font-bold text-white shadow-lg shadow-rose-600/30 transition-all hover:bg-rose-700 active:scale-[0.99] disabled:opacity-50"
             >
               {loading ? (
                 <>
-                  <Spinner className="size-4 text-slate-950" />
+                  <Spinner className="size-4 text-white" />
                   Authenticating...
                 </>
               ) : (
@@ -130,10 +130,10 @@ export function AdminLoginPage() {
           </form>
 
           {/* Links */}
-          <div className="relative mt-6 border-t border-slate-800 pt-4 text-center">
+          <div className="relative mt-6 border-t border-zinc-800/80 pt-4 text-center">
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition-colors hover:text-amber-400"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 transition-colors hover:text-rose-400"
             >
               <ArrowLeft className="size-3.5" />
               Switch to Customer / Client Sign In
@@ -143,7 +143,7 @@ export function AdminLoginPage() {
 
         {/* Back to store */}
         <div className="mt-4 text-center">
-          <Link to="/" className="text-xs font-semibold text-slate-400 hover:text-white">
+          <Link to="/" className="text-xs font-semibold text-zinc-400 hover:text-white">
             ← Return to Public Storefront
           </Link>
         </div>

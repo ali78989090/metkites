@@ -73,9 +73,9 @@ export const config = {
   },
 
   admin: {
-    email: (env.ADMIN_EMAIL || "admin@metrolahorekites.pk").trim().toLowerCase(),
-    name: env.ADMIN_NAME || "Metro Lahore Kites Admin",
-    password: env.ADMIN_PASSWORD || "",
+    email: (env.ADMIN_EMAIL || "ebad@gmail.com").trim().toLowerCase(),
+    name: env.ADMIN_NAME || "Ebad (Admin)",
+    password: env.ADMIN_PASSWORD || "03262577882",
   },
 
   allowedOrigins: allowedOriginsList,
