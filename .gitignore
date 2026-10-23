@@ -10,3 +10,6 @@ server/data/*.db-shm
 server/uploads/*
 !server/uploads/.gitkeep
 .DS_Store
+
+.vercel
+.env*
