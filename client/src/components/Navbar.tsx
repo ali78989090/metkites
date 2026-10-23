@@ -42,30 +42,20 @@ export function Navbar() {
         aria-label="Festival Announcement"
         className="relative z-30 border-b border-white/10 bg-gradient-to-r from-zinc-950 via-[#180730] to-zinc-950 py-2 text-white shadow-inner"
       >
-        <div className="container-x flex flex-col items-center justify-between gap-1.5 text-xs sm:flex-row sm:gap-4">
-          <div className="flex flex-wrap items-center justify-center gap-2 text-center sm:justify-start sm:text-left">
-            <span className="relative flex size-2 shrink-0">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-rose-400 opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-rose-500" />
-            </span>
-            <span className="whitespace-nowrap rounded-full bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide text-rose-300 ring-1 ring-rose-400/40">
-              BASANT 2026
-            </span>
-            <span className="hidden font-display text-[13px] text-rose-100 md:inline">
-              لاہور کی پہچان، بسنت کی اڑان — Authentic Kite &amp; Cotton Dor Pre-Orders Open
-            </span>
-            <span className="font-display text-[12px] text-rose-100 md:hidden">
-              Basant Festival 2026 Pre-Orders Live!
-            </span>
-          </div>
-
-          <Link
-            to="/shop"
-            className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-bold text-rose-300 ring-1 ring-white/10 transition-all hover:bg-rose-600 hover:text-white hover:ring-rose-500"
-          >
-            <span>Book Your Dor &amp; Kites</span>
-            <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-          </Link>
+        <div className="container-x flex items-center justify-center gap-2 text-center text-xs">
+          <span className="relative flex size-2 shrink-0">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-rose-400 opacity-75" />
+            <span className="relative inline-flex size-2 rounded-full bg-rose-500" />
+          </span>
+          <span className="whitespace-nowrap rounded-full bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide text-rose-300 ring-1 ring-rose-400/40">
+            BASANT 2026
+          </span>
+          <span className="hidden font-display text-[13px] text-rose-100 md:inline">
+            لاہور کی پہچان، بسنت کی اڑان — Authentic Kite &amp; Cotton Dor Pre-Orders Open
+          </span>
+          <span className="font-display text-[12px] text-rose-100 md:hidden">
+            Basant Festival 2026 Pre-Orders Live!
+          </span>
         </div>
       </aside>
 
