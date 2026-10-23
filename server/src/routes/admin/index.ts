@@ -8,6 +8,8 @@ import { ORDER_STATUSES, SETTING_KEYS } from "../../constants.js";
 import { getAllSettings, saveSettings, publicSettings } from "../../lib/settings.js";
 import { adminOrdersRouter } from "./orders.js";
 import { adminProductsRouter } from "./products.js";
+import { adminAuditRouter } from "./audit.js";
+import { logAudit } from "../../lib/audit.js";
 import { slugify } from "../../lib/ids.js";
 
 export const adminRouter = Router();
@@ -342,3 +344,5 @@ adminRouter.patch(
 
 adminRouter.use("/orders", adminOrdersRouter);
 adminRouter.use("/products", adminProductsRouter);
+adminRouter.use("/audit", adminAuditRouter);
+

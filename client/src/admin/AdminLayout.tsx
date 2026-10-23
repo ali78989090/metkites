@@ -7,7 +7,9 @@ const nav = [
   { to: "/admin", label: "Overview", end: true },
   { to: "/admin/orders", label: "Pre-Orders" },
   { to: "/admin/products", label: "Products" },
+  { to: "/admin/categories", label: "Categories & Brands" },
   { to: "/admin/customers", label: "Customers" },
+  { to: "/admin/audit", label: "Audit & Queries" },
   { to: "/admin/settings", label: "Settings" },
 ];
 

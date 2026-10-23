@@ -247,6 +247,19 @@ const MIGRATIONS: string[] = [
     updated_at TEXT NOT NULL
   );
   `,
+  `
+  CREATE TABLE IF NOT EXISTS audit_logs (
+    id         TEXT PRIMARY KEY,
+    actor      TEXT NOT NULL,
+    action     TEXT NOT NULL,
+    entity     TEXT NOT NULL,
+    entity_id  TEXT NOT NULL DEFAULT '',
+    details    TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at);
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity, entity_id);
+  `,
 ];
 
 const meta = db.prepare(

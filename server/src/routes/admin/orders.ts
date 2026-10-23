@@ -5,6 +5,8 @@ import { badRequest, handler, notFound, parseBody, parseQuery } from "../../lib/
 import { findOrderById, rowToOrder, type OrderDto } from "../../lib/serializers.js";
 import { ORDER_STATUSES, STATUS_LABELS, STATUS_TRANSITIONS, type OrderStatus } from "../../constants.js";
 import { getSetting } from "../../lib/settings.js";
+import { logAudit } from "../../lib/audit.js";
+import { normalizePhone } from "../../lib/ids.js";
 
 export const adminOrdersRouter = Router();
 
@@ -137,6 +139,18 @@ const patchSchema = z.object({
   status: z.enum(ORDER_STATUSES).optional(),
   adminNotes: z.string().trim().max(4000).optional(),
   note: z.string().trim().max(1000).optional(),
+  firstName: z.string().trim().min(1).max(60).optional(),
+  lastName: z.string().trim().min(1).max(60).optional(),
+  phone: z.string().trim().max(30).optional(),
+  city: z.string().trim().max(60).optional(),
+  address: z.string().trim().max(300).optional(),
+  orderNote: z.string().trim().max(1000).optional(),
+  subtotalPkr: z.number().int().min(0).nullable().optional(),
+  priceStatus: z.enum(["ok", "tbc"]).optional(),
+  kiteSize: z.string().trim().max(60).optional(),
+  kiteType: z.string().trim().max(60).optional(),
+  dorType: z.string().trim().max(60).optional(),
+  brandName: z.string().trim().max(60).optional(),
 });
 
 adminOrdersRouter.patch(
@@ -148,6 +162,62 @@ adminOrdersRouter.patch(
 
     const actor = req.user?.email || req.user?.fullName || "staff";
     const now = nowIso();
+
+    // Field-level updates
+    if (
+      body.firstName !== undefined ||
+      body.lastName !== undefined ||
+      body.phone !== undefined ||
+      body.city !== undefined ||
+      body.address !== undefined ||
+      body.orderNote !== undefined ||
+      body.subtotalPkr !== undefined ||
+      body.priceStatus !== undefined ||
+      body.kiteSize !== undefined ||
+      body.kiteType !== undefined ||
+      body.dorType !== undefined ||
+      body.brandName !== undefined
+    ) {
+      const nextPhone = body.phone !== undefined ? body.phone : order.phone;
+      const normalized = normalizePhone(nextPhone);
+      run(
+        `UPDATE pre_orders SET
+          first_name = COALESCE(?, first_name),
+          last_name = COALESCE(?, last_name),
+          phone = COALESCE(?, phone),
+          phone_normalized = ?,
+          city = COALESCE(?, city),
+          address = COALESCE(?, address),
+          order_note = COALESCE(?, order_note),
+          subtotal_pkr = ?,
+          price_status = COALESCE(?, price_status),
+          kite_size = COALESCE(?, kite_size),
+          kite_type = COALESCE(?, kite_type),
+          dor_type = COALESCE(?, dor_type),
+          brand_name = COALESCE(?, brand_name),
+          updated_at = ?
+         WHERE id = ?`,
+        body.firstName ?? null,
+        body.lastName ?? null,
+        body.phone ?? null,
+        normalized,
+        body.city ?? null,
+        body.address ?? null,
+        body.orderNote ?? null,
+        body.subtotalPkr !== undefined ? body.subtotalPkr : order.subtotal_pkr,
+        body.priceStatus ?? null,
+        body.kiteSize ?? null,
+        body.kiteType ?? null,
+        body.dorType ?? null,
+        body.brandName ?? null,
+        now,
+        order.id,
+      );
+      logAudit(actor, "edit_order_details", "pre_orders", order.id, {
+        reference: order.reference,
+        changes: body,
+      });
+    }
 
     if (body.adminNotes !== undefined) {
       run("UPDATE pre_orders SET admin_notes = ?, updated_at = ? WHERE id = ?", body.adminNotes, now, order.id);
@@ -185,6 +255,12 @@ adminOrdersRouter.patch(
           actor,
           now,
         );
+        logAudit(actor, "update_order_status", "pre_orders", order.id, {
+          reference: order.reference,
+          from: current,
+          to: next,
+          note: body.note ?? "",
+        });
       } else if (body.note) {
         run(
           `INSERT INTO order_status_history (id, order_id, from_status, to_status, note, actor, created_at)
@@ -215,6 +291,18 @@ adminOrdersRouter.patch(
 
     const updated = findOrderById(order.id)!;
     res.json({ ok: true, order: rowToOrder(updated, { includePrivate: true }) });
+  }),
+);
+
+adminOrdersRouter.delete(
+  "/:id",
+  handler((req, res) => {
+    const order = findOrderById(String(req.params.id));
+    if (!order) throw notFound("Order not found.");
+    const actor = req.user?.email || req.user?.fullName || "admin";
+    run("DELETE FROM pre_orders WHERE id = ?", order.id);
+    logAudit(actor, "delete_order", "pre_orders", order.id, { reference: order.reference });
+    res.json({ ok: true, message: `Pre-order ${order.reference} deleted.` });
   }),
 );
 

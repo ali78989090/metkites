@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import { useSettings } from "../lib/settings";
 import { useToast } from "../components/Toast";
-import { Skeleton, StatusBadge, TbcBadge } from "../components/ui";
+import { Skeleton, StatusBadge, TbcBadge, Field, Input, Textarea } from "../components/ui";
 import { formatDateTime, formatPkr } from "../lib/format";
 import { STATUS_LABELS, STATUS_ORDER, type Order, type OrderStatus } from "../lib/types";
 
@@ -24,6 +24,7 @@ export function AdminOrderDetailPage() {
   const { id = "" } = useParams();
   const { push } = useToast();
   const { settings } = useSettings();
+  const navigate = useNavigate();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,94 @@ export function AdminOrderDetailPage() {
 
   const [contactChannel, setContactChannel] = useState<(typeof CHANNELS)[number]>("whatsapp");
   const [contactNote, setContactNote] = useState("");
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    address: "",
+    city: "",
+    orderNote: "",
+    subtotalPkr: "" as string | number,
+    priceStatus: "tbc" as "ok" | "tbc",
+    kiteSize: "",
+    kiteType: "",
+    dorType: "",
+    brandName: "",
+  });
+
+  const openEditModal = () => {
+    if (!order) return;
+    setEditForm({
+      firstName: order.customer.firstName,
+      lastName: order.customer.lastName,
+      phone: order.customer.phone,
+      address: order.customer.address,
+      city: order.customer.city,
+      orderNote: order.orderNote || "",
+      subtotalPkr: order.subtotalPkr !== null ? order.subtotalPkr : "",
+      priceStatus: order.priceStatus,
+      kiteSize: order.preferences.kiteSize || "",
+      kiteType: order.preferences.kiteType || "",
+      dorType: order.preferences.dorType || "",
+      brandName: order.preferences.brandName || "",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!order) return;
+    setSaving(true);
+    try {
+      const subtotalNum = editForm.subtotalPkr === "" ? null : Number(editForm.subtotalPkr);
+      const data = await api<{ ok: true; order: Order }>(`/api/admin/orders/${order.id}`, {
+        method: "PATCH",
+        body: {
+          firstName: editForm.firstName.trim(),
+          lastName: editForm.lastName.trim(),
+          phone: editForm.phone.trim(),
+          address: editForm.address.trim(),
+          city: editForm.city.trim(),
+          orderNote: editForm.orderNote.trim(),
+          subtotalPkr: subtotalNum,
+          priceStatus: subtotalNum !== null ? "ok" : editForm.priceStatus,
+          kiteSize: editForm.kiteSize.trim(),
+          kiteType: editForm.kiteType.trim(),
+          dorType: editForm.dorType.trim(),
+          brandName: editForm.brandName.trim(),
+        },
+      });
+      setOrder(data.order);
+      setIsEditModalOpen(false);
+      push("Order details updated successfully.", "success");
+    } catch (error) {
+      push(error instanceof ApiError ? error.message : "Could not update order.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteOrder = async () => {
+    if (
+      !order ||
+      !window.confirm(
+        `Are you sure you want to delete pre-order ${order.reference}? This action will permanently remove it.`,
+      )
+    ) {
+      return;
+    }
+    setSaving(true);
+    try {
+      await api(`/api/admin/orders/${order.id}`, { method: "DELETE" });
+      push(`Pre-order ${order.reference} deleted.`, "success");
+      navigate("/admin/orders", { replace: true });
+    } catch (error) {
+      push(error instanceof ApiError ? error.message : "Failed to delete pre-order.", "error");
+      setSaving(false);
+    }
+  };
 
   const load = useCallback(() => {
     setLoading(true);
@@ -143,9 +232,18 @@ export function AdminOrderDetailPage() {
             {order.reference}
             <StatusBadge status={order.status} />
           </h1>
-          <p className="mt-1 text-sm text-ink/60">Submitted {formatDateTime(order.createdAt)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={openEditModal} className="btn-brand text-sm">
+            Edit Details ✎
+          </button>
+          <button
+            type="button"
+            onClick={deleteOrder}
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-100"
+          >
+            Delete 🗑
+          </button>
           {whatsapp ? (
             <a
               href={`https://wa.me/${customerPhone}?text=${encodeURIComponent(message)}`}
@@ -430,6 +528,130 @@ export function AdminOrderDetailPage() {
           </section>
         </div>
       </div>
+
+      {/* Edit Order Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="font-display text-xl font-bold text-ink">
+              Edit Pre-Order ({order.reference})
+            </h2>
+            <form onSubmit={saveEdit} className="mt-4 space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="First Name" htmlFor="edit-fname" required>
+                  <Input
+                    id="edit-fname"
+                    value={editForm.firstName}
+                    onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                    required
+                  />
+                </Field>
+                <Field label="Last Name" htmlFor="edit-lname" required>
+                  <Input
+                    id="edit-lname"
+                    value={editForm.lastName}
+                    onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                    required
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Phone / WhatsApp" htmlFor="edit-phone" required>
+                  <Input
+                    id="edit-phone"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    required
+                  />
+                </Field>
+                <Field label="City" htmlFor="edit-city" required>
+                  <Input
+                    id="edit-city"
+                    value={editForm.city}
+                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    required
+                  />
+                </Field>
+              </div>
+
+              <Field label="Delivery Address" htmlFor="edit-addr" required>
+                <Input
+                  id="edit-addr"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  required
+                />
+              </Field>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Subtotal PKR (optional)" htmlFor="edit-subtotal">
+                  <Input
+                    id="edit-subtotal"
+                    type="number"
+                    value={editForm.subtotalPkr}
+                    onChange={(e) => setEditForm({ ...editForm, subtotalPkr: e.target.value })}
+                    placeholder="e.g. 4500"
+                  />
+                </Field>
+                <Field label="Brand Preference" htmlFor="edit-brand">
+                  <Input
+                    id="edit-brand"
+                    value={editForm.brandName}
+                    onChange={(e) => setEditForm({ ...editForm, brandName: e.target.value })}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <Field label="Kite Size" htmlFor="edit-ksize">
+                  <Input
+                    id="edit-ksize"
+                    value={editForm.kiteSize}
+                    onChange={(e) => setEditForm({ ...editForm, kiteSize: e.target.value })}
+                  />
+                </Field>
+                <Field label="Kite Type" htmlFor="edit-ktype">
+                  <Input
+                    id="edit-ktype"
+                    value={editForm.kiteType}
+                    onChange={(e) => setEditForm({ ...editForm, kiteType: e.target.value })}
+                  />
+                </Field>
+                <Field label="Dor Type" htmlFor="edit-dtype">
+                  <Input
+                    id="edit-dtype"
+                    value={editForm.dorType}
+                    onChange={(e) => setEditForm({ ...editForm, dorType: e.target.value })}
+                  />
+                </Field>
+              </div>
+
+              <Field label="Customer Order Note" htmlFor="edit-note">
+                <Textarea
+                  id="edit-note"
+                  rows={2}
+                  value={editForm.orderNote}
+                  onChange={(e) => setEditForm({ ...editForm, orderNote: e.target.value })}
+                />
+              </Field>
+
+              <div className="mt-6 flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="rounded-lg border border-ink/10 px-4 py-2 text-sm font-semibold text-ink/70 hover:bg-mist"
+                >
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving} className="btn-brand text-sm">
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
