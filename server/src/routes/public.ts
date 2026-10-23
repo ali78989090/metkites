@@ -198,7 +198,9 @@ publicRouter.post(
     if (!order) throw notFound("No pre-order found with that reference number and phone.");
 
     const tokenMatch = Boolean(body.token) && order.tracking_token === body.token;
-    const phoneMatch = Boolean(body.phone) && normalizePhone(body.phone!) === order.phone_normalized;
+    const phoneMatch =
+      Boolean(body.phone) &&
+      normalizePhone(body.phone!) === normalizePhone(order.phone_normalized || order.phone);
     if (!tokenMatch && !phoneMatch) {
       throw notFound("No pre-order found with that reference number and phone.");
     }

@@ -388,13 +388,14 @@ export function listOrderRows(): OrderRow[] {
 }
 
 export async function findOrderByReferenceAsync(reference: string): Promise<OrderRow | undefined> {
-  const local = findOrderByReference(reference);
+  const norm = reference.trim().toUpperCase();
+  const local = findOrderByReference(norm);
   if (local) return local;
 
   try {
     const { syncOrderFromMongo } = await import("./mongo.js");
-    const synced = await syncOrderFromMongo("reference", reference);
-    if (synced) return findOrderByReference(reference);
+    const synced = await syncOrderFromMongo("reference", norm);
+    if (synced) return findOrderByReference(norm);
   } catch {
     /* fallback to local only */
   }

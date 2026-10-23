@@ -19,6 +19,8 @@ declare global {
 
 const cached = global._mlk_mongoose_cache || (global._mlk_mongoose_cache = { conn: null, promise: null });
 
+let isRestored = false;
+
 export async function initMongo(): Promise<typeof mongoose | null> {
   if (config.isTest || !config.mongoUri) {
     return null;
@@ -35,12 +37,11 @@ export async function initMongo(): Promise<typeof mongoose | null> {
         connectTimeoutMS: 10000,
         maxPoolSize: 10,
       })
-      .then(async (m) => {
+      .then((m) => {
         isConnected = true;
         isConnecting = false;
         cached.conn = m;
         console.log("[MongoDB Atlas] Connected successfully to cluster.");
-        await restoreSqliteFromMongo();
         return m;
       })
       .catch((err) => {
@@ -53,6 +54,9 @@ export async function initMongo(): Promise<typeof mongoose | null> {
 
   try {
     cached.conn = await cached.promise;
+    if (cached.conn && !isRestored) {
+      await restoreSqliteFromMongo();
+    }
     return cached.conn;
   } catch {
     cached.promise = null;
@@ -64,9 +68,9 @@ export async function initMongo(): Promise<typeof mongoose | null> {
  * Restores data from MongoDB Atlas into SQLite if SQLite tables are empty.
  */
 export async function restoreSqliteFromMongo(): Promise<void> {
-  const m = await initMongo();
-  const mongoDb = m?.connection?.db || mongoose.connection.db;
+  const mongoDb = cached.conn?.connection?.db || mongoose.connection?.db;
   if (!mongoDb) return;
+  isRestored = true;
 
   const tables = [
     "categories",
@@ -185,7 +189,11 @@ export async function syncOrderFromMongo(
     const mongoDb = m?.connection?.db || mongoose.connection.db;
     if (!mongoDb) return false;
 
-    const filter = field === "reference" ? { reference: value.trim().toUpperCase() } : { id: value };
+    const val = value.trim();
+    const filter =
+      field === "reference"
+        ? { reference: { $regex: new RegExp(`^${val.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}$`, "i") } }
+        : { id: val };
     const orderDoc = (await mongoDb.collection("pre_orders").findOne(filter)) as Record<string, unknown> | null;
     if (!orderDoc) return false;
 
@@ -238,6 +246,22 @@ export async function syncOrderFromMongo(
         return v as string | number | bigint | null | Uint8Array;
       });
       db.prepare(`INSERT OR REPLACE INTO order_items (${itemCols.join(",")}) VALUES (${itemPlaceholders})`).run(...itemVals);
+    }
+
+    // Insert fallback order status history so tracking latestUpdate displays properly
+    const existingHistory = (db.prepare("SELECT count(*) as c FROM order_status_history WHERE order_id = ?").get(orderId) as { c: number } | undefined)?.c || 0;
+    if (existingHistory === 0) {
+      db.prepare(
+        `INSERT INTO order_status_history (id, order_id, from_status, to_status, note, actor, created_at)
+         VALUES (?, ?, NULL, ?, ?, ?, ?)`,
+      ).run(
+        `osh_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`,
+        orderId,
+        String(orderCopy.status || "pending"),
+        "Pre-order synced from MongoDB Atlas cloud database.",
+        orderCopy.is_guest ? "guest" : "customer",
+        String(orderCopy.created_at || new Date().toISOString()),
+      );
     }
 
     return true;
