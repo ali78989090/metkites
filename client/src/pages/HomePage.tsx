@@ -280,8 +280,12 @@ export function HomePage() {
             <p className="section-eyebrow">Browse</p>
             <h2 className="mt-2 font-display text-2xl font-black sm:text-3xl">Shop by category</h2>
           </div>
-          <Link to="/shop" className="text-sm font-semibold text-brand hover:underline">
-            View all products →
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 shadow-xs transition-all hover:bg-rose-600 hover:text-white hover:border-rose-600 hover:shadow-md active:scale-95 sm:text-sm"
+          >
+            <span>View all products</span>
+            <span>→</span>
           </Link>
         </div>
 
@@ -317,8 +321,12 @@ export function HomePage() {
               <p className="section-eyebrow">Collection</p>
               <h2 className="mt-2 font-display text-2xl font-black sm:text-3xl">Pre-order favourites</h2>
             </div>
-            <Link to="/shop" className="text-sm font-semibold text-brand hover:underline">
-              Shop everything →
+            <Link
+              to="/shop"
+              className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-white px-4 py-2 text-xs font-bold text-rose-600 shadow-xs transition-all hover:bg-rose-600 hover:text-white hover:border-rose-600 hover:shadow-md active:scale-95 sm:text-sm"
+            >
+              <span>Shop everything</span>
+              <span>→</span>
             </Link>
           </div>
 
@@ -360,6 +368,95 @@ export function HomePage() {
           <Link to="/how-pre-orders-work" className="btn-dark">
             Read the full guide
           </Link>
+        </div>
+      </section>
+
+      {/* Official Government License & Registration Certificate Section */}
+      <section className="border-t border-ink/8 bg-gradient-to-b from-white via-mist/50 to-white py-14 sm:py-20">
+        <div className="container-x">
+          <div className="mx-auto max-w-4xl rounded-3xl border border-emerald-600/20 bg-white p-6 shadow-xl ring-1 ring-black/5 sm:p-10">
+            <div className="grid items-center gap-8 lg:grid-cols-12">
+              {/* Left Column: Details & Verification Badge */}
+              <div className="space-y-4 lg:col-span-7">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-800">
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Govt. of Punjab Registered Manufacturer</span>
+                </div>
+
+                <h2 className="font-display text-2xl font-black text-ink sm:text-3xl">
+                  Official Certificate of Registration for Basant
+                </h2>
+
+                <p className="text-sm leading-relaxed text-ink/70">
+                  Metro Lahore Kites is an officially registered and authorized manufacturer under the{" "}
+                  <strong className="text-ink">Punjab Regulation of Kite Flying Ordinance</strong> by the{" "}
+                  <strong className="text-ink">Deputy Commissioner, Lahore</strong>. We strictly produce and supply
+                  100% certified cotton dor spools and authentic permissible kites.
+                </p>
+
+                {/* Key Certification Points */}
+                <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                  <div className="rounded-xl border border-ink/10 bg-mist/60 p-3">
+                    <p className="font-bold text-ink/50 uppercase text-[10px]">Registration No.</p>
+                    <p className="mt-0.5 font-mono text-xs font-black text-ink">198782-09092026</p>
+                  </div>
+                  <div className="rounded-xl border border-ink/10 bg-mist/60 p-3">
+                    <p className="font-bold text-ink/50 uppercase text-[10px]">License Category</p>
+                    <p className="mt-0.5 font-sans text-xs font-black text-emerald-700">Kite Flying - Manufacturer</p>
+                  </div>
+                  <div className="rounded-xl border border-ink/10 bg-mist/60 p-3">
+                    <p className="font-bold text-ink/50 uppercase text-[10px]">Managed By</p>
+                    <p className="mt-0.5 font-sans text-xs font-bold text-ink">Ebad Furqan (Admin)</p>
+                  </div>
+                  <div className="rounded-xl border border-ink/10 bg-mist/60 p-3">
+                    <p className="font-bold text-ink/50 uppercase text-[10px]">Authority</p>
+                    <p className="mt-0.5 font-sans text-xs font-bold text-ink">Deputy Commissioner, Lahore</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-3">
+                  <a
+                    href="/img/certificate.png"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary py-2.5 text-xs font-bold"
+                  >
+                    View Full Certificate 📄
+                  </a>
+                  <a
+                    href="https://wa.me/923262577882?text=Salam!%20I%20would%20like%20to%20verify%20the%20Govt%20Registration%20Certificate%20(Reg:%20198782-09092026)."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-outline flex items-center gap-2 border-emerald-500/30 text-emerald-700 hover:bg-emerald-50 text-xs font-bold py-2.5"
+                  >
+                    WhatsApp Verification 💬
+                  </a>
+                </div>
+              </div>
+
+              {/* Right Column: Framed Certificate Thumbnail with Click to Enlarge */}
+              <div className="flex justify-center lg:col-span-5">
+                <a
+                  href="/img/certificate.png"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Click to view full high-resolution certificate"
+                  className="group relative block overflow-hidden rounded-2xl border-4 border-emerald-600/20 bg-white p-1.5 shadow-2xl transition-transform duration-300 hover:scale-[1.03]"
+                >
+                  <img
+                    src="/img/certificate.png"
+                    alt="Official Certificate of Registration for Basant — Metro Lahore Kites"
+                    className="max-h-[380px] w-auto rounded-xl object-contain"
+                  />
+                  <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 p-4">
+                    <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-ink shadow-md backdrop-blur">
+                      🔍 Click to enlarge certificate
+                    </span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </>
