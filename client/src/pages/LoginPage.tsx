@@ -47,8 +47,8 @@ export function LoginPage() {
           <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink/5">
             <Logo className="h-16" />
           </div>
-          <h1 className="mt-4 font-display text-2xl font-black">Sign in</h1>
-          <p className="mt-1 text-sm text-ink/55">Optional — guest pre-orders never need an account.</p>
+          <h1 className="mt-4 font-display text-2xl font-black">Client &amp; Pre-Order Sign In</h1>
+          <p className="mt-1 text-sm text-ink/55">Optional — guest pre-orders never require an account.</p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
@@ -78,19 +78,32 @@ export function LoginPage() {
             />
           </Field>
           <button type="submit" disabled={loading} className="btn-primary w-full py-3">
-            {loading ? <Spinner /> : "Sign in"}
+            {loading ? <Spinner /> : "Sign in to Client Account"}
           </button>
         </form>
 
         <p className="mt-5 text-center text-sm text-ink/60">
           New here?{" "}
           <Link to="/register" className="font-semibold text-brand hover:underline">
-            Create an account
+            Create a customer account
           </Link>
         </p>
         <p className="mt-2 text-center text-sm">
           <Link to="/shop" className="text-ink/50 hover:text-brand">Continue shopping without an account →</Link>
         </p>
+
+        <div className="mt-6 border-t border-ink/8 pt-4 text-center">
+          <Link
+            to="/admin/login"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/45 transition-colors hover:text-amber-700"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3.5 text-amber-600">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            Store Manager or Staff? Open Admin Portal →
+          </Link>
+        </div>
       </div>
     </div>
   );

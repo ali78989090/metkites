@@ -22,6 +22,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { AccountPage } from "./pages/AccountPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
+import { AdminLoginPage } from "./admin/AdminLoginPage";
 import { AdminLayout } from "./admin/AdminLayout";
 import { AdminOverviewPage } from "./admin/AdminOverviewPage";
 import { AdminOrdersPage } from "./admin/AdminOrdersPage";
@@ -65,8 +66,8 @@ function AdminGuard() {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <FullScreenLoader />;
-  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />;
-  if (user.role !== "admin") return <Navigate to="/" replace />;
+  if (!user) return <Navigate to={`/admin/login?next=${encodeURIComponent(location.pathname)}`} replace />;
+  if (user.role !== "admin") return <Navigate to="/admin/login?error=unauthorized" replace />;
   return <Outlet />;
 }
 
@@ -78,6 +79,7 @@ export default function App() {
           <ToastProvider>
             <ScrollToTop />
             <Routes>
+              {/* Client & Customer Storefront */}
               <Route element={<StoreLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="/shop" element={<ShopPage />} />
@@ -93,6 +95,11 @@ export default function App() {
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
+
+              {/* Dedicated Admin Portal Login (Separate from Customer Login) */}
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+
+              {/* Protected Admin Back-Office */}
               <Route path="/admin" element={<AdminGuard />}>
                 <Route element={<AdminLayout />}>
                   <Route index element={<AdminOverviewPage />} />
@@ -114,3 +121,4 @@ export default function App() {
     </SettingsProvider>
   );
 }
+

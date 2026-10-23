@@ -66,7 +66,36 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="ml-0 flex items-center gap-0.5 sm:ml-auto sm:gap-1.5">
+        <div className="ml-0 flex items-center gap-1 sm:ml-auto sm:gap-2">
+          {/* Admin CDN Portal Access Button */}
+          <Link
+            to={user?.role === "admin" ? "/admin" : "/admin/login"}
+            title="Admin Portal — Staff & Management Access"
+            aria-label="Admin Portal"
+            className="group relative flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-50/80 px-2 py-1.5 text-xs font-bold text-amber-800 transition-all hover:border-amber-500/60 hover:bg-amber-100 hover:shadow-sm"
+          >
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex size-2 rounded-full bg-amber-500"></span>
+            </span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-4 text-amber-700 transition-transform group-hover:scale-110"
+              aria-hidden="true"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            <span className="hidden font-display text-[11px] font-black tracking-wide sm:inline uppercase">
+              Admin
+            </span>
+          </Link>
+
           <Link
             to="/cart"
             className="relative rounded-lg p-2 text-ink hover:bg-mist"
@@ -175,6 +204,18 @@ export function Navbar() {
                   </Link>
                 </>
               )}
+            </div>
+            <div className="mt-2 border-t border-ink/8 pt-2">
+              <Link
+                to={user?.role === "admin" ? "/admin" : "/admin/login"}
+                className="flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-50/90 py-2 text-xs font-bold text-amber-800"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4 text-amber-600">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                Admin Portal (Staff Only)
+              </Link>
             </div>
           </div>
         </nav>
