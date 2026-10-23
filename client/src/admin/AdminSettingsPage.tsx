@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import { useToast } from "../components/Toast";
 import { Skeleton } from "../components/ui";
@@ -36,13 +37,32 @@ const FIELDS: Array<{
 export function AdminSettingsPage() {
   const { push } = useToast();
   const [settings, setSettings] = useState<Record<string, string> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [is401, setIs401] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const loadSettings = () => {
+    setLoading(true);
+    setError(null);
+    setIs401(false);
     api<{ ok: true; settings: Record<string, string> }>("/api/admin/settings")
-      .then((data) => setSettings(data.settings))
-      .catch((error) => push(error instanceof ApiError ? error.message : "Could not load settings.", "error"));
-  }, [push]);
+      .then((data) => {
+        setSettings(data.settings);
+        setError(null);
+      })
+      .catch((err) => {
+        const msg = err instanceof ApiError ? err.message : "Could not load settings.";
+        setError(msg);
+        if (err instanceof ApiError && err.status === 401) setIs401(true);
+        push(msg, "error");
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const setValue = (key: string, value: string) => {
     setSettings((current) => (current ? { ...current, [key]: value } : current));
@@ -66,13 +86,36 @@ export function AdminSettingsPage() {
     }
   };
 
-  if (!settings) {
+  if (loading && !settings) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 max-w-3xl">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-96 w-full" />
       </div>
     );
+  }
+
+  if (error && !settings) {
+    return (
+      <div className="max-w-3xl rounded-2xl border border-red-200 bg-red-50/50 p-6">
+        <h2 className="text-base font-bold text-red-900">Failed to load system settings</h2>
+        <p className="mt-1 text-sm text-red-700">{error}</p>
+        <div className="mt-4 flex gap-3">
+          <button type="button" onClick={loadSettings} className="btn-primary text-xs">
+            Retry loading
+          </button>
+          {is401 && (
+            <Link to="/admin/login" className="btn-dark text-xs">
+              Sign In to Admin →
+            </Link>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return null;
   }
 
   return (

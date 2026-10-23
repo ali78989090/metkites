@@ -24,6 +24,16 @@ export class ApiError extends Error {
   }
 }
 
+type UnauthorizedHandler = (path: string, error: ApiError) => void;
+let unauthorizedListener: UnauthorizedHandler | null = null;
+
+export function registerUnauthorizedHandler(fn: UnauthorizedHandler): () => void {
+  unauthorizedListener = fn;
+  return () => {
+    if (unauthorizedListener === fn) unauthorizedListener = null;
+  };
+}
+
 interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
   formData?: FormData;
@@ -39,12 +49,20 @@ export async function api<T = unknown>(path: string, options: ApiOptions = {}): 
     body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(path, {
-    ...options,
-    headers: { ...headers, ...(options.headers as Record<string, string> | undefined) },
-    body,
-    credentials: "include",
-  });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...options,
+      headers: { ...headers, ...(options.headers as Record<string, string> | undefined) },
+      body,
+      credentials: "include",
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
+    throw new ApiError(0, "network_error", "Unable to connect to the server. Please check your internet connection.");
+  }
 
   const contentType = response.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
@@ -52,12 +70,19 @@ export async function api<T = unknown>(path: string, options: ApiOptions = {}): 
 
   if (!response.ok) {
     const errorPayload = payload as { error?: { code?: string; message?: string; details?: Array<{ path: string; message: string }> } } | null;
-    throw new ApiError(
+    const error = new ApiError(
       response.status,
-      errorPayload?.error?.code ?? "request_failed",
-      errorPayload?.error?.message ?? "Something went wrong. Please try again.",
+      errorPayload?.error?.code ?? (response.status === 401 ? "unauthorized" : response.status === 403 ? "forbidden" : "request_failed"),
+      errorPayload?.error?.message ?? (response.status === 401 ? "Session expired or authentication required." : "Something went wrong. Please try again."),
       errorPayload?.error?.details ?? [],
     );
+
+    // If an authenticated endpoint returns 401 (excluding deliberate login attempts), trigger the handler
+    if (response.status === 401 && !path.startsWith("/api/auth/login") && !path.startsWith("/api/auth/register")) {
+      unauthorizedListener?.(path, error);
+    }
+
+    throw error;
   }
   return payload as T;
 }

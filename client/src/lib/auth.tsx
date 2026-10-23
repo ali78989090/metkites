@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { api } from "./api";
+import { api, registerUnauthorizedHandler } from "./api";
 import type { User } from "./types";
 
 interface AuthContextValue {
@@ -32,6 +32,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    return registerUnauthorizedHandler((path) => {
+      // If a protected route fails with 401, mark the session as unauthenticated
+      if (path.startsWith("/api/admin") || path.startsWith("/api/account")) {
+        setUser(null);
+      }
+    });
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const data = await api<{ user: User }>("/api/auth/login", { method: "POST", body: { email, password } });

@@ -429,12 +429,46 @@ describe("accounts and authentication", () => {
     assert.equal(body.error.message, "Sign in to the admin dashboard.");
     const orders = await anon.get("/api/admin/orders");
     assert.equal(orders.status, 401);
+
+    // Verify 4 reported endpoints return 401 for anonymous callers
+    assert.equal((await anon.get("/api/admin/brands")).status, 401);
+    assert.equal((await anon.get("/api/admin/customers?page=1&pageSize=25")).status, 401);
+    assert.equal((await anon.get("/api/admin/audit/logs?page=1&pageSize=25&entity=all")).status, 401);
+    assert.equal((await anon.get("/api/admin/settings")).status, 401);
   });
 
   test("admin routes reject signed-in customers with 403", async () => {
     const { status, body } = await customer.get("/api/admin/overview");
     assert.equal(status, 403);
     assert.equal(body.error.message, "Admin access only.");
+
+    // Verify 4 reported endpoints return 403 for non-admin accounts
+    assert.equal((await customer.get("/api/admin/brands")).status, 403);
+    assert.equal((await customer.get("/api/admin/customers?page=1&pageSize=25")).status, 403);
+    assert.equal((await customer.get("/api/admin/audit/logs?page=1&pageSize=25&entity=all")).status, 403);
+    assert.equal((await customer.get("/api/admin/settings")).status, 403);
+  });
+
+  test("authenticated admin can load brands, customers, audit logs, and settings", async () => {
+    const brands = await admin.get("/api/admin/brands");
+    assert.equal(brands.status, 200);
+    assert.equal(brands.body.ok, true);
+    assert.ok(Array.isArray(brands.body.items));
+
+    const customers = await admin.get("/api/admin/customers?page=1&pageSize=25");
+    assert.equal(customers.status, 200);
+    assert.equal(customers.body.ok, true);
+    assert.ok(Array.isArray(customers.body.items));
+
+    const logs = await admin.get("/api/admin/audit/logs?page=1&pageSize=25&entity=all");
+    assert.equal(logs.status, 200);
+    assert.equal(logs.body.ok, true);
+    assert.ok(Array.isArray(logs.body.items));
+
+    const settings = await admin.get("/api/admin/settings");
+    assert.equal(settings.status, 200);
+    assert.equal(settings.body.ok, true);
+    assert.ok(typeof settings.body.settings === "object");
   });
 
   // Final login call in the suite — burns the 20/10min limiter.

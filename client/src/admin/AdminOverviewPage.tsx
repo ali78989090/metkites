@@ -47,30 +47,42 @@ export function AdminOverviewPage() {
     : [];
 
   return (
-    <div>
-      <h1 className="font-display text-2xl font-black">Overview</h1>
-      <p className="mt-1 text-sm text-ink/60">Pre-order activity at a glance.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-black text-ink sm:text-3xl">Operations Overview</h1>
+        <p className="mt-1 text-sm text-ink/60">Real-time Basant kite festival pre-order activity and key performance indicators.</p>
+      </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {overview === null
-          ? Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-24 w-full" />)
+          ? Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-28 w-full rounded-2xl" />)
           : stats.map((stat) => (
-              <div key={stat.label} className={`card p-5 ${stat.accent ? "border-brand/30" : ""}`}>
-                <p className="text-xs font-semibold uppercase tracking-wider text-ink/45">{stat.label}</p>
-                <p className={`mt-2 font-display text-3xl font-black ${stat.accent ? "text-brand" : ""}`}>{stat.value}</p>
+              <div
+                key={stat.label}
+                className={`group relative overflow-hidden rounded-2xl border bg-white p-5 shadow-xs transition-all hover:shadow-md ${
+                  stat.accent
+                    ? "border-brand/40 bg-gradient-to-br from-white via-white to-red-50/30"
+                    : "border-ink/10 hover:border-ink/20"
+                }`}
+              >
+                {stat.accent && <div className="absolute top-0 inset-x-0 h-1 bg-brand" />}
+                <p className="text-[11px] font-bold uppercase tracking-wider text-ink/50">{stat.label}</p>
+                <p className={`mt-2 font-display text-3xl font-black ${stat.accent ? "text-brand" : "text-ink"}`}>
+                  {stat.value}
+                </p>
               </div>
             ))}
       </div>
 
-      <div className="mt-8">
+      <div>
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-black">Recent pre-orders</h2>
-          <Link to="/admin/orders" className="text-sm font-semibold text-brand hover:underline">
-            View all →
+          <h2 className="font-display text-lg font-black text-ink">Recent Pre-Orders</h2>
+          <Link to="/admin/orders" className="text-sm font-bold text-brand hover:underline">
+            View all orders →
           </Link>
         </div>
 
-        <div className="card mt-3 overflow-x-auto">
+        <div className="mt-3 overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-xs">
           {overview === null ? (
             <Skeleton className="m-4 h-40 w-[calc(100%-2rem)]" />
           ) : overview.recent.length === 0 ? (

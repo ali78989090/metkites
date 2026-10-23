@@ -82,10 +82,13 @@ function rowToUser(row: Record<string, unknown>): AuthUser {
   };
 }
 
-/** Resolves `req.user` from the session cookie (null when anonymous). */
+/** Resolves `req.user` from the session cookie or Authorization Bearer header (null when anonymous). */
 export const sessionMiddleware: RequestHandler = (req, _res, next) => {
   req.user = null;
-  const token = req.cookies?.[config.session.cookieName] as string | undefined;
+  let token = req.cookies?.[config.session.cookieName] as string | undefined;
+  if (!token && typeof req.headers.authorization === "string" && req.headers.authorization.startsWith("Bearer ")) {
+    token = req.headers.authorization.slice(7).trim();
+  }
   if (!token) {
     next();
     return;
