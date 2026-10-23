@@ -5,7 +5,11 @@ ensureRuntimeDirs();
 
 export const db = new DatabaseSync(config.databasePath);
 
-db.exec("PRAGMA journal_mode = WAL;");
+try {
+  db.exec("PRAGMA journal_mode = WAL;");
+} catch {
+  /* Fallback to default journal mode if WAL is unavailable */
+}
 db.exec("PRAGMA foreign_keys = ON;");
 db.exec("PRAGMA busy_timeout = 5000;");
 

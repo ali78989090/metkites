@@ -14,6 +14,7 @@ try {
 }
 
 const env = process.env;
+export const isVercel = Boolean(env.VERCEL || env.VERCEL_ENV || env.NOW_REGION);
 
 function bool(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined || value === "") return fallback;
@@ -23,23 +24,44 @@ function bool(value: string | undefined, fallback: boolean): boolean {
 export const isProduction = env.NODE_ENV === "production";
 export const isTest = env.NODE_ENV === "test" || Boolean(env.MLK_TEST);
 
+const defaultDbPath = isVercel
+  ? path.join("/tmp", "metrolahorekites.db")
+  : path.join(repoRoot, "server", "data", "metrolahorekites.db");
+
+const defaultUploadsDir = isVercel
+  ? path.join("/tmp", "uploads")
+  : path.join(repoRoot, "server", "uploads");
+
+const allowedOriginsList = (env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+if (env.VERCEL_URL) {
+  allowedOriginsList.push(`https://${env.VERCEL_URL}`);
+}
+if (env.VERCEL_PROJECT_PRODUCTION_URL) {
+  allowedOriginsList.push(`https://${env.VERCEL_PROJECT_PRODUCTION_URL}`);
+}
+
 export const config = {
   port: Number(env.PORT || 4000),
   nodeEnv: env.NODE_ENV || "development",
   isProduction,
   isTest,
+  isVercel,
 
   databasePath:
     env.DATABASE_PATH && env.DATABASE_PATH !== ":memory:"
       ? path.resolve(repoRoot, env.DATABASE_PATH)
       : env.DATABASE_PATH === ":memory:"
         ? ":memory:"
-        : path.join(repoRoot, "server", "data", "metrolahorekites.db"),
+        : defaultDbPath,
 
   uploadsDir:
     env.UPLOADS_DIR && env.UPLOADS_DIR !== ":memory:"
       ? path.resolve(repoRoot, env.UPLOADS_DIR)
-      : path.join(repoRoot, "server", "uploads"),
+      : defaultUploadsDir,
 
   clientDist: path.join(repoRoot, "client", "dist"),
 
@@ -56,10 +78,7 @@ export const config = {
     password: env.ADMIN_PASSWORD || "",
   },
 
-  allowedOrigins: (env.ALLOWED_ORIGINS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean),
+  allowedOrigins: allowedOriginsList,
 
   business: {
     whatsapp: (env.BUSINESS_WHATSAPP || "").replace(/[^0-9]/g, ""),
@@ -73,7 +92,27 @@ export const config = {
 
 export function ensureRuntimeDirs(): void {
   if (config.databasePath !== ":memory:") {
-    fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
+    try {
+      fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
+    } catch {
+      /* ignore if exists or read-only filesystem */
+    }
   }
-  fs.mkdirSync(config.uploadsDir, { recursive: true });
+  try {
+    fs.mkdirSync(config.uploadsDir, { recursive: true });
+  } catch {
+    /* ignore */
+  }
+
+  // On Vercel: copy pre-existing seed database if /tmp/metrolahorekites.db does not exist yet
+  if (isVercel && config.databasePath.startsWith("/tmp")) {
+    const bundledDb = path.join(repoRoot, "server", "data", "metrolahorekites.db");
+    if (!fs.existsSync(config.databasePath) && fs.existsSync(bundledDb)) {
+      try {
+        fs.copyFileSync(bundledDb, config.databasePath);
+      } catch (err) {
+        console.warn("Could not copy bundled DB to /tmp:", err);
+      }
+    }
+  }
 }

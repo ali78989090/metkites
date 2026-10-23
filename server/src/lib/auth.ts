@@ -138,10 +138,15 @@ export const originCheck: RequestHandler = (req, _res, next) => {
     return;
   }
   const host = req.headers.host;
+  const xForwardedHost = req.headers["x-forwarded-host"];
   const allowed = new Set<string>([...(config.allowedOrigins || [])]);
   if (host) {
     allowed.add(`http://${host}`);
     allowed.add(`https://${host}`);
+  }
+  if (typeof xForwardedHost === "string") {
+    allowed.add(`http://${xForwardedHost}`);
+    allowed.add(`https://${xForwardedHost}`);
   }
   let originHost = "";
   try {
