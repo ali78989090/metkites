@@ -41,6 +41,11 @@ interface ApiOptions extends Omit<RequestInit, "body"> {
 
 export async function api<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
+  const storedToken = typeof window !== "undefined" ? localStorage.getItem("mlk_auth_token") : null;
+  if (storedToken) {
+    headers["Authorization"] = `Bearer ${storedToken}`;
+  }
+
   let body: BodyInit | undefined;
   if (options.formData) {
     body = options.formData;

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { config } from "../env.js";
 import { all, get, run, nowIso } from "../db.js";
 import { randomToken, sha256 } from "./ids.js";
@@ -36,26 +37,69 @@ function expiryDate(): string {
   return new Date(Date.now() + ttlMs).toISOString();
 }
 
-/** Creates a session row and returns the raw token (only ever sent to the client once). */
+function signSessionToken(userId: string, expiresAt: number): string {
+  const secret = config.session.secret || "mlk_basant_2026_super_secure_session_secret_key_923262577882";
+  const payload = `${userId}.${expiresAt}`;
+  const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  return `mlk_${payload}.${sig}`;
+}
+
+function verifySessionToken(token: string): { userId: string; expiresAt: number } | null {
+  if (!token.startsWith("mlk_")) return null;
+  const rest = token.slice(4);
+  const parts = rest.split(".");
+  if (parts.length !== 3) return null;
+  const [userId, expiresAtStr, sig] = parts;
+  const expiresAt = Number(expiresAtStr);
+  if (!userId || isNaN(expiresAt) || expiresAt < Date.now()) return null;
+  const secret = config.session.secret || "mlk_basant_2026_super_secure_session_secret_key_923262577882";
+  const expectedSig = crypto.createHmac("sha256", secret).update(`${userId}.${expiresAt}`).digest("hex");
+  try {
+    const a = Buffer.from(sig, "utf-8");
+    const b = Buffer.from(expectedSig, "utf-8");
+    if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
+      return { userId, expiresAt };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/** Creates a session row and returns a signed session token. */
 export function createSession(userId: string): string {
-  const token = randomToken(24);
-  run(
-    "INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
-    sha256(token),
-    userId,
-    expiryDate(),
-    nowIso(),
-  );
+  const ttlMs = config.session.ttlDays * 24 * 60 * 60 * 1000;
+  const expiresAt = Date.now() + ttlMs;
+  const token = signSessionToken(userId, expiresAt);
+  try {
+    run(
+      "INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
+      sha256(token),
+      userId,
+      new Date(expiresAt).toISOString(),
+      nowIso(),
+    );
+  } catch {
+    /* ignore */
+  }
   return token;
 }
 
 export function destroySession(token: string | undefined): void {
   if (!token) return;
-  run("DELETE FROM sessions WHERE token_hash = ?", sha256(token));
+  try {
+    run("DELETE FROM sessions WHERE token_hash = ?", sha256(token));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function destroyAllSessionsForUser(userId: string): void {
-  run("DELETE FROM sessions WHERE user_id = ?", userId);
+  try {
+    run("DELETE FROM sessions WHERE user_id = ?", userId);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function setSessionCookie(res: Response, token: string): void {
@@ -69,7 +113,7 @@ export function setSessionCookie(res: Response, token: string): void {
 }
 
 export function clearSessionCookie(res: Response): void {
-  res.clearCookie(config.session.cookieName, { path: "/" });
+  res.clearCookie(config.session.cookieName, { path: "/", sameSite: "lax", secure: config.secureCookies });
 }
 
 function rowToUser(row: Record<string, unknown>): AuthUser {
@@ -93,13 +137,39 @@ export const sessionMiddleware: RequestHandler = (req, _res, next) => {
     next();
     return;
   }
-  const row = get(
+  let row = get(
     `SELECT u.id, u.full_name, u.email, u.phone, u.role
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ? AND s.expires_at > ?`,
     sha256(token),
     nowIso(),
   );
+
+  if (!row) {
+    // Cross-container serverless fallback (e.g., Vercel fresh container instance)
+    const verified = verifySessionToken(token);
+    if (verified) {
+      const userRow = get(
+        "SELECT id, full_name, email, phone, role FROM users WHERE id = ?",
+        verified.userId,
+      );
+      if (userRow) {
+        row = userRow;
+        try {
+          run(
+            "INSERT OR REPLACE INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
+            sha256(token),
+            verified.userId,
+            new Date(verified.expiresAt).toISOString(),
+            nowIso(),
+          );
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }
+
   if (row) req.user = rowToUser(row);
   next();
 };

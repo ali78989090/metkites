@@ -78,6 +78,7 @@ authRouter.post(
     setSessionCookie(res, token);
     res.status(201).json({
       ok: true,
+      token,
       user: { id: userId, fullName: body.fullName, email, phone, role: "customer" },
     });
   }),
@@ -105,6 +106,7 @@ authRouter.post(
     setSessionCookie(res, token);
     res.json({
       ok: true,
+      token,
       user: publicUser({
         id: row.id,
         fullName: row.full_name,
@@ -119,7 +121,11 @@ authRouter.post(
 authRouter.post(
   "/logout",
   handler((req, res) => {
-    destroySession(req.cookies?.[SESSION_COOKIE]);
+    let token = req.cookies?.[SESSION_COOKIE];
+    if (!token && typeof req.headers.authorization === "string" && req.headers.authorization.startsWith("Bearer ")) {
+      token = req.headers.authorization.slice(7).trim();
+    }
+    destroySession(token);
     clearSessionCookie(res);
     res.json({ ok: true });
   }),

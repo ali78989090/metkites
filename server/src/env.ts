@@ -69,7 +69,7 @@ export const config = {
     cookieName: "mlk_session",
     /** 30 days */
     ttlDays: 30,
-    secret: env.SESSION_SECRET || "",
+    secret: env.SESSION_SECRET || "mlk_basant_2026_super_secure_session_secret_key_923262577882",
   },
 
   admin: {

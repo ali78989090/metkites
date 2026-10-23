@@ -37,20 +37,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return registerUnauthorizedHandler((path) => {
       // If a protected route fails with 401, mark the session as unauthenticated
       if (path.startsWith("/api/admin") || path.startsWith("/api/account")) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("mlk_auth_token");
+        }
         setUser(null);
       }
     });
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const data = await api<{ user: User }>("/api/auth/login", { method: "POST", body: { email, password } });
+    const data = await api<{ user: User; token?: string }>("/api/auth/login", { method: "POST", body: { email, password } });
+    if (data.token && typeof window !== "undefined") {
+      localStorage.setItem("mlk_auth_token", data.token);
+    }
     setUser(data.user);
     return data.user;
   }, []);
 
   const register = useCallback(
     async (input: { fullName: string; email: string; phone?: string; password: string }) => {
-      const data = await api<{ user: User }>("/api/auth/register", { method: "POST", body: input });
+      const data = await api<{ user: User; token?: string }>("/api/auth/register", { method: "POST", body: input });
+      if (data.token && typeof window !== "undefined") {
+        localStorage.setItem("mlk_auth_token", data.token);
+      }
       setUser(data.user);
       return data.user;
     },
@@ -58,8 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await api("/api/auth/logout", { method: "POST" });
-    setUser(null);
+    try {
+      await api("/api/auth/logout", { method: "POST" });
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("mlk_auth_token");
+      }
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo(
