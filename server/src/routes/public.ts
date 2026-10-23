@@ -3,7 +3,7 @@ import { z } from "zod";
 import { all, get } from "../db.js";
 import { handler, notFound, parseQuery } from "../lib/http.js";
 import { publicSettings } from "../lib/settings.js";
-import { findOrderByReference, productSelect, rowToProduct, rowToPublicTracking } from "../lib/serializers.js";
+import { findOrderByReference, findOrderByReferenceAsync, productSelect, rowToProduct, rowToPublicTracking } from "../lib/serializers.js";
 import { normalizePhone } from "../lib/ids.js";
 
 export const publicRouter = Router();
@@ -173,9 +173,9 @@ const trackQuery = z.object({
 
 publicRouter.get(
   "/track",
-  handler((req, res) => {
+  handler(async (req, res) => {
     const query = parseQuery(trackQuery, req);
-    const order = findOrderByReference(query.ref);
+    const order = await findOrderByReferenceAsync(query.ref);
     if (!order) throw notFound("No pre-order found with that reference number.");
     if (!query.token || order.tracking_token !== query.token) {
       throw notFound("No pre-order found with that reference number.");
@@ -192,9 +192,9 @@ const trackBody = z.object({
 
 publicRouter.post(
   "/track",
-  handler((req, res) => {
+  handler(async (req, res) => {
     const body = trackBody.parse(req.body);
-    const order = findOrderByReference(body.reference);
+    const order = await findOrderByReferenceAsync(body.reference);
     if (!order) throw notFound("No pre-order found with that reference number and phone.");
 
     const tokenMatch = Boolean(body.token) && order.tracking_token === body.token;

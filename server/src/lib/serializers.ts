@@ -386,3 +386,31 @@ export function listOrderRows(): OrderRow[] {
        FROM pre_orders`,
   );
 }
+
+export async function findOrderByReferenceAsync(reference: string): Promise<OrderRow | undefined> {
+  const local = findOrderByReference(reference);
+  if (local) return local;
+
+  try {
+    const { syncOrderFromMongo } = await import("./mongo.js");
+    const synced = await syncOrderFromMongo("reference", reference);
+    if (synced) return findOrderByReference(reference);
+  } catch {
+    /* fallback to local only */
+  }
+  return undefined;
+}
+
+export async function findOrderByIdAsync(id: string): Promise<OrderRow | undefined> {
+  const local = findOrderById(id);
+  if (local) return local;
+
+  try {
+    const { syncOrderFromMongo } = await import("./mongo.js");
+    const synced = await syncOrderFromMongo("id", id);
+    if (synced) return findOrderById(id);
+  } catch {
+    /* fallback to local only */
+  }
+  return undefined;
+}

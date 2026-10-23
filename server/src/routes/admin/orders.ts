@@ -51,7 +51,13 @@ function buildFilters(query: z.infer<typeof listQuery>): ListFilters {
 
 adminOrdersRouter.get(
   "/",
-  handler((req, res) => {
+  handler(async (req, res) => {
+    try {
+      const { syncAllOrdersFromMongo } = await import("../../lib/mongo.js");
+      await syncAllOrdersFromMongo();
+    } catch {
+      /* ignore if offline */
+    }
     const query = parseQuery(listQuery, req);
     const { where, params } = buildFilters(query);
     const totalRow = get<{ count: number }>(`SELECT COUNT(*) AS count FROM pre_orders WHERE ${where}`, ...params);
@@ -128,8 +134,17 @@ adminOrdersRouter.get(
 
 adminOrdersRouter.get(
   "/:id",
-  handler((req, res) => {
-    const order = findOrderById(String(req.params.id));
+  handler(async (req, res) => {
+    let order = findOrderById(String(req.params.id));
+    if (!order) {
+      try {
+        const { syncOrderFromMongo } = await import("../../lib/mongo.js");
+        await syncOrderFromMongo("id", String(req.params.id));
+        order = findOrderById(String(req.params.id));
+      } catch {
+        /* ignore */
+      }
+    }
     if (!order) throw notFound("Order not found.");
     res.json({ ok: true, order: rowToOrder(order, { includePrivate: true }) });
   }),
@@ -155,9 +170,18 @@ const patchSchema = z.object({
 
 adminOrdersRouter.patch(
   "/:id",
-  handler((req, res) => {
+  handler(async (req, res) => {
     const body = parseBody(patchSchema, req);
-    const order = findOrderById(String(req.params.id));
+    let order = findOrderById(String(req.params.id));
+    if (!order) {
+      try {
+        const { syncOrderFromMongo } = await import("../../lib/mongo.js");
+        await syncOrderFromMongo("id", String(req.params.id));
+        order = findOrderById(String(req.params.id));
+      } catch {
+        /* ignore */
+      }
+    }
     if (!order) throw notFound("Order not found.");
 
     const actor = req.user?.email || req.user?.fullName || "staff";
@@ -290,17 +314,55 @@ adminOrdersRouter.patch(
     }
 
     const updated = findOrderById(order.id)!;
+
+    try {
+      const { mongoUpdate } = await import("../../lib/mongo.js");
+      await mongoUpdate(
+        "pre_orders",
+        { id: order.id },
+        {
+          status: updated.status,
+          status_message: getSetting(`status_messages.${updated.status}`, ""),
+          status_updated_at: updated.status_updated_at,
+          admin_notes: updated.admin_notes,
+          updated_at: updated.updated_at,
+          first_name: updated.first_name,
+          last_name: updated.last_name,
+          phone: updated.phone,
+          phone_normalized: updated.phone_normalized,
+          address: updated.address,
+          city: updated.city,
+          subtotal_pkr: updated.subtotal_pkr,
+          price_status: updated.price_status,
+          kite_size: updated.kite_size,
+          kite_type: updated.kite_type,
+          dor_type: updated.dor_type,
+          brand_name: updated.brand_name,
+          order_note: updated.order_note,
+        },
+      );
+    } catch {
+      /* ignore if offline */
+    }
+
     res.json({ ok: true, order: rowToOrder(updated, { includePrivate: true }) });
   }),
 );
 
 adminOrdersRouter.delete(
   "/:id",
-  handler((req, res) => {
+  handler(async (req, res) => {
     const order = findOrderById(String(req.params.id));
     if (!order) throw notFound("Order not found.");
     const actor = req.user?.email || req.user?.fullName || "admin";
     run("DELETE FROM pre_orders WHERE id = ?", order.id);
+    try {
+      const { mongoDelete } = await import("../../lib/mongo.js");
+      await mongoDelete("pre_orders", { id: order.id });
+      await mongoDelete("order_items", { order_id: order.id });
+    } catch {
+      /* ignore */
+    }
     logAudit(actor, "delete_order", "pre_orders", order.id, { reference: order.reference });
     res.json({ ok: true, message: `Pre-order ${order.reference} deleted.` });
   }),

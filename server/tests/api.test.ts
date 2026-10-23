@@ -1046,6 +1046,12 @@ describe("public order tracking", () => {
     assert.equal(status, 404);
     assert.equal(body.error.code, "not_found");
   });
+
+  test("tracking with malformed query parameters returns 400 validation error instead of unhandled 404", async () => {
+    const { status, body } = await anon.get("/api/track");
+    assert.equal(status, 400);
+    assert.equal(body.error.code, "validation_error");
+  });
 });
 
 /* ================================================================== */

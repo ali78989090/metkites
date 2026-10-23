@@ -3,10 +3,10 @@ import { seedAll } from "../server/dist/lib/seed.js";
 import { initMongo } from "../server/dist/lib/mongo.js";
 
 let bootstrapped = false;
-function ensureBootstrapped() {
+async function ensureBootstrapped() {
   if (!bootstrapped) {
     try {
-      void initMongo();
+      await initMongo();
       seedAll();
     } catch (err) {
       console.warn("Bootstrap warning:", err);
@@ -17,7 +17,7 @@ function ensureBootstrapped() {
 
 const app = buildApp();
 
-export default function handler(req, res) {
-  ensureBootstrapped();
+export default async function handler(req, res) {
+  await ensureBootstrapped();
   return app(req, res);
 }

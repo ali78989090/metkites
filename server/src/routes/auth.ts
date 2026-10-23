@@ -145,7 +145,13 @@ authRouter.get(
 authRouter.get(
   "/me/orders",
   requireAuth,
-  handler((req, res) => {
+  handler(async (req, res) => {
+    try {
+      const { syncAllOrdersFromMongo } = await import("../lib/mongo.js");
+      await syncAllOrdersFromMongo();
+    } catch {
+      /* ignore */
+    }
     const orders = listOrderRows()
       .filter((row) => row.user_id === req.user!.id)
       .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
@@ -157,8 +163,17 @@ authRouter.get(
 authRouter.get(
   "/me/orders/:reference",
   requireAuth,
-  handler((req, res) => {
-    const order = findOrderByReference(String(req.params.reference));
+  handler(async (req, res) => {
+    let order = findOrderByReference(String(req.params.reference));
+    if (!order) {
+      try {
+        const { syncOrderFromMongo } = await import("../lib/mongo.js");
+        await syncOrderFromMongo("reference", String(req.params.reference));
+        order = findOrderByReference(String(req.params.reference));
+      } catch {
+        /* ignore */
+      }
+    }
     // Never reveal whether an order exists for another customer.
     if (!order || order.user_id !== req.user!.id) {
       throw notFound("No pre-order found with that reference number.");

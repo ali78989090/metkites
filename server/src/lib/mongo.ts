@@ -12,29 +12,50 @@ import { db } from "../db.js";
 let isConnecting = false;
 let isConnected = false;
 
+declare global {
+  // eslint-disable-next-line no-var
+  var _mlk_mongoose_cache: { conn: typeof mongoose | null; promise: Promise<typeof mongoose | null> | null } | undefined;
+}
+
+const cached = global._mlk_mongoose_cache || (global._mlk_mongoose_cache = { conn: null, promise: null });
+
 export async function initMongo(): Promise<typeof mongoose | null> {
   if (config.isTest || !config.mongoUri) {
     return null;
   }
-  if (isConnected) return mongoose;
-  if (isConnecting) return null;
+  if (cached.conn && isConnected && mongoose.connection.readyState === 1) {
+    return cached.conn;
+  }
 
-  isConnecting = true;
+  if (!cached.promise) {
+    isConnecting = true;
+    cached.promise = mongoose
+      .connect(config.mongoUri, {
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 10000,
+        maxPoolSize: 10,
+      })
+      .then(async (m) => {
+        isConnected = true;
+        isConnecting = false;
+        cached.conn = m;
+        console.log("[MongoDB Atlas] Connected successfully to cluster.");
+        await restoreSqliteFromMongo();
+        return m;
+      })
+      .catch((err) => {
+        isConnecting = false;
+        cached.promise = null;
+        console.warn("[MongoDB Atlas] Connection notice:", (err as Error).message);
+        return null;
+      });
+  }
+
   try {
-    await mongoose.connect(config.mongoUri, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 10000,
-    });
-    isConnected = true;
-    isConnecting = false;
-    console.log("[MongoDB Atlas] Connected successfully to cluster.");
-
-    // Sync any data from MongoDB if SQLite is fresh (e.g. on new Vercel container)
-    await restoreSqliteFromMongo();
-    return mongoose;
-  } catch (error) {
-    isConnecting = false;
-    console.warn("[MongoDB Atlas] Connection notice:", (error as Error).message);
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch {
+    cached.promise = null;
     return null;
   }
 }
@@ -43,7 +64,8 @@ export async function initMongo(): Promise<typeof mongoose | null> {
  * Restores data from MongoDB Atlas into SQLite if SQLite tables are empty.
  */
 export async function restoreSqliteFromMongo(): Promise<void> {
-  const mongoDb = mongoose.connection.db;
+  const m = await initMongo();
+  const mongoDb = m?.connection?.db || mongoose.connection.db;
   if (!mongoDb) return;
 
   const tables = [
@@ -66,6 +88,7 @@ export async function restoreSqliteFromMongo(): Promise<void> {
         if (docs.length > 0) {
           for (const doc of docs) {
             delete (doc as Record<string, unknown>)._id;
+            delete (doc as Record<string, unknown>).items;
             const columns = Object.keys(doc);
             const placeholders = columns.map(() => "?").join(",");
             const values = Object.values(doc).map((v) => {
@@ -88,45 +111,204 @@ export async function restoreSqliteFromMongo(): Promise<void> {
 }
 
 /**
- * Asynchronously upserts a record to MongoDB Atlas.
+ * Awaited upsert into MongoDB Atlas.
  */
-export function mongoUpsert(
+export async function mongoUpsert(
   collectionName: string,
   doc: Record<string, unknown>,
   keyField = "id",
-): void {
+): Promise<void> {
   if (config.isTest) return;
 
-  void (async () => {
-    try {
-      await initMongo();
-      const mongoDb = mongoose.connection.db;
-      if (!mongoDb) return;
+  try {
+    const m = await initMongo();
+    const mongoDb = m?.connection?.db || mongoose.connection.db;
+    if (!mongoDb) return;
 
-      const keyValue = doc[keyField];
-      const filter = keyValue ? { [keyField]: keyValue } : doc;
-      await mongoDb.collection(collectionName).updateOne(filter, { $set: doc }, { upsert: true });
-    } catch (err) {
-      console.warn(`[MongoDB Atlas] Failed to upsert into ${collectionName}:`, (err as Error).message);
-    }
-  })();
+    const keyValue = doc[keyField];
+    const filter = keyValue ? { [keyField]: keyValue } : doc;
+    await mongoDb.collection(collectionName).updateOne(filter, { $set: doc }, { upsert: true });
+  } catch (err) {
+    console.warn(`[MongoDB Atlas] Failed to upsert into ${collectionName}:`, (err as Error).message);
+  }
 }
 
 /**
- * Asynchronously deletes a record from MongoDB Atlas.
+ * Awaited update into MongoDB Atlas.
  */
-export function mongoDelete(collectionName: string, filter: Record<string, unknown>): void {
+export async function mongoUpdate(
+  collectionName: string,
+  filter: Record<string, unknown>,
+  updateFields: Record<string, unknown>,
+): Promise<void> {
   if (config.isTest) return;
 
-  void (async () => {
-    try {
-      await initMongo();
-      const mongoDb = mongoose.connection.db;
-      if (!mongoDb) return;
+  try {
+    const m = await initMongo();
+    const mongoDb = m?.connection?.db || mongoose.connection.db;
+    if (!mongoDb) return;
 
-      await mongoDb.collection(collectionName).deleteOne(filter);
-    } catch (err) {
-      console.warn(`[MongoDB Atlas] Failed to delete from ${collectionName}:`, (err as Error).message);
+    await mongoDb.collection(collectionName).updateOne(filter, { $set: updateFields });
+  } catch (err) {
+    console.warn(`[MongoDB Atlas] Failed to update ${collectionName}:`, (err as Error).message);
+  }
+}
+
+/**
+ * Awaited delete from MongoDB Atlas.
+ */
+export async function mongoDelete(collectionName: string, filter: Record<string, unknown>): Promise<void> {
+  if (config.isTest) return;
+
+  try {
+    const m = await initMongo();
+    const mongoDb = m?.connection?.db || mongoose.connection.db;
+    if (!mongoDb) return;
+
+    await mongoDb.collection(collectionName).deleteOne(filter);
+  } catch (err) {
+    console.warn(`[MongoDB Atlas] Failed to delete from ${collectionName}:`, (err as Error).message);
+  }
+}
+
+/**
+ * Syncs a specific order from MongoDB Atlas into SQLite by reference or id.
+ */
+export async function syncOrderFromMongo(
+  field: "reference" | "id",
+  value: string,
+): Promise<boolean> {
+  if (config.isTest) return false;
+
+  try {
+    const m = await initMongo();
+    const mongoDb = m?.connection?.db || mongoose.connection.db;
+    if (!mongoDb) return false;
+
+    const filter = field === "reference" ? { reference: value.trim().toUpperCase() } : { id: value };
+    const orderDoc = (await mongoDb.collection("pre_orders").findOne(filter)) as Record<string, unknown> | null;
+    if (!orderDoc) return false;
+
+    // Insert order into SQLite
+    const orderCopy = { ...orderDoc };
+    const items = (Array.isArray(orderCopy.items) ? orderCopy.items : []) as Array<Record<string, unknown>>;
+    delete orderCopy._id;
+    delete orderCopy.items;
+
+    const orderCols = Object.keys(orderCopy);
+    const orderPlaceholders = orderCols.map(() => "?").join(",");
+    const orderVals = Object.values(orderCopy).map((v) => {
+      if (v === undefined || v === null) return null;
+      if (typeof v === "boolean") return v ? 1 : 0;
+      if (v instanceof Date) return v.toISOString();
+      return v as string | number | bigint | null | Uint8Array;
+    });
+    db.prepare(`INSERT OR REPLACE INTO pre_orders (${orderCols.join(",")}) VALUES (${orderPlaceholders})`).run(...orderVals);
+
+    // Insert order items into SQLite
+    const orderId = String(orderCopy.id);
+    for (const item of items) {
+      const itemCopy: Record<string, any> = { ...(item as Record<string, any>), order_id: orderId };
+      delete itemCopy._id;
+      // Map properties if they were in camelCase
+      const resolvedItem = {
+        id: itemCopy.id || `oit_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`,
+        order_id: orderId,
+        product_id: itemCopy.productId || itemCopy.product_id || null,
+        product_slug: itemCopy.productSlug || itemCopy.product_slug || "",
+        product_name: itemCopy.productName || itemCopy.product_name || "",
+        category_name: itemCopy.categoryName || itemCopy.category_name || "",
+        brand_name: itemCopy.brandName || itemCopy.brand_name || "",
+        variant_name: itemCopy.variantName || itemCopy.variant_name || "",
+        unit: itemCopy.unit || "piece",
+        quantity: Number(itemCopy.quantity || 1),
+        unit_price_pkr: itemCopy.unitPricePkr !== undefined ? itemCopy.unitPricePkr : (itemCopy.unit_price_pkr ?? null),
+        price_status: itemCopy.priceStatus || itemCopy.price_status || "tbc",
+        line_total_pkr: itemCopy.lineTotalPkr !== undefined ? itemCopy.lineTotalPkr : (itemCopy.line_total_pkr ?? null),
+        image_path: itemCopy.imagePath || itemCopy.image_path || "",
+        snapshot_json: typeof itemCopy.snapshot === "object" ? JSON.stringify(itemCopy.snapshot) : String(itemCopy.snapshot_json || "{}"),
+        created_at: String(itemCopy.createdAt || itemCopy.created_at || orderCopy.created_at || new Date().toISOString()),
+      };
+
+      const itemCols = Object.keys(resolvedItem);
+      const itemPlaceholders = itemCols.map(() => "?").join(",");
+      const itemVals = Object.values(resolvedItem).map((v) => {
+        if (v === undefined || v === null) return null;
+        if (typeof v === "boolean") return v ? 1 : 0;
+        return v as string | number | bigint | null | Uint8Array;
+      });
+      db.prepare(`INSERT OR REPLACE INTO order_items (${itemCols.join(",")}) VALUES (${itemPlaceholders})`).run(...itemVals);
     }
-  })();
+
+    return true;
+  } catch (err) {
+    console.warn(`[MongoDB Atlas] Failed to sync order ${field}=${value}:`, (err as Error).message);
+    return false;
+  }
+}
+
+/**
+ * Syncs all orders from MongoDB Atlas into SQLite.
+ */
+export async function syncAllOrdersFromMongo(): Promise<void> {
+  if (config.isTest) return;
+
+  try {
+    const m = await initMongo();
+    const mongoDb = m?.connection?.db || mongoose.connection.db;
+    if (!mongoDb) return;
+
+    const orderDocs = (await mongoDb.collection("pre_orders").find().toArray()) as Array<Record<string, unknown>>;
+    for (const orderDoc of orderDocs) {
+      const orderCopy = { ...orderDoc };
+      const items = (Array.isArray(orderCopy.items) ? orderCopy.items : []) as Array<Record<string, unknown>>;
+      delete orderCopy._id;
+      delete orderCopy.items;
+
+      const orderCols = Object.keys(orderCopy);
+      const orderPlaceholders = orderCols.map(() => "?").join(",");
+      const orderVals = Object.values(orderCopy).map((v) => {
+        if (v === undefined || v === null) return null;
+        if (typeof v === "boolean") return v ? 1 : 0;
+        if (v instanceof Date) return v.toISOString();
+        return v as string | number | bigint | null | Uint8Array;
+      });
+      db.prepare(`INSERT OR REPLACE INTO pre_orders (${orderCols.join(",")}) VALUES (${orderPlaceholders})`).run(...orderVals);
+
+      const orderId = String(orderCopy.id);
+      for (const item of items) {
+        const itemCopy: Record<string, any> = { ...(item as Record<string, any>), order_id: orderId };
+        delete itemCopy._id;
+        const resolvedItem = {
+          id: itemCopy.id || `oit_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`,
+          order_id: orderId,
+          product_id: itemCopy.productId || itemCopy.product_id || null,
+          product_slug: itemCopy.productSlug || itemCopy.product_slug || "",
+          product_name: itemCopy.productName || itemCopy.product_name || "",
+          category_name: itemCopy.categoryName || itemCopy.category_name || "",
+          brand_name: itemCopy.brandName || itemCopy.brand_name || "",
+          variant_name: itemCopy.variantName || itemCopy.variant_name || "",
+          unit: itemCopy.unit || "piece",
+          quantity: Number(itemCopy.quantity || 1),
+          unit_price_pkr: itemCopy.unitPricePkr !== undefined ? itemCopy.unitPricePkr : (itemCopy.unit_price_pkr ?? null),
+          price_status: itemCopy.priceStatus || itemCopy.price_status || "tbc",
+          line_total_pkr: itemCopy.lineTotalPkr !== undefined ? itemCopy.lineTotalPkr : (itemCopy.line_total_pkr ?? null),
+          image_path: itemCopy.imagePath || itemCopy.image_path || "",
+          snapshot_json: typeof itemCopy.snapshot === "object" ? JSON.stringify(itemCopy.snapshot) : String(itemCopy.snapshot_json || "{}"),
+          created_at: String(itemCopy.createdAt || itemCopy.created_at || orderCopy.created_at || new Date().toISOString()),
+        };
+
+        const itemCols = Object.keys(resolvedItem);
+        const itemPlaceholders = itemCols.map(() => "?").join(",");
+        const itemVals = Object.values(resolvedItem).map((v) => {
+          if (v === undefined || v === null) return null;
+          if (typeof v === "boolean") return v ? 1 : 0;
+          return v as string | number | bigint | null | Uint8Array;
+        });
+        db.prepare(`INSERT OR REPLACE INTO order_items (${itemCols.join(",")}) VALUES (${itemPlaceholders})`).run(...itemVals);
+      }
+    }
+  } catch (err) {
+    console.warn("[MongoDB Atlas] Failed to sync all orders:", (err as Error).message);
+  }
 }

@@ -92,7 +92,7 @@ function whatsappFor(reference: string, itemsCount: number, subtotalPkr: number 
 preorderRouter.post(
   "/",
   submissionLimiter,
-  handler((req, res) => {
+  handler(async (req, res) => {
     if (!getSettingBool("preorders.enabled", true)) {
       throw forbidden(
         "Pre-orders are currently paused by Metro Lahore Kites. Please check back soon or contact us directly.",
@@ -362,35 +362,39 @@ preorderRouter.post(
       );
     });
 
-    // Cloud sync to MongoDB Atlas
-    mongoUpsert("pre_orders", {
-      id: insertedId,
-      reference,
-      tracking_token: trackingToken,
-      user_id: req.user?.id ?? null,
-      is_guest: req.user ? 0 : 1,
-      first_name: body.customer.firstName,
-      last_name: body.customer.lastName,
-      phone: body.customer.phone,
-      phone_normalized: phoneNormalized,
-      address: body.customer.address,
-      city: body.customer.city,
-      kite_size: body.preferences?.kiteSize ?? "",
-      kite_type: body.preferences?.kiteType ?? "",
-      dor_type: body.preferences?.dorType ?? "",
-      brand_name: body.preferences?.brandName ?? "",
-      order_note: body.note ?? "",
-      status: "pending",
-      subtotal_pkr: subtotalPkr,
-      price_status: allPriced ? "ok" : "tbc",
-      items_count: itemsCount,
-      terms_accepted: 1,
-      idempotency_key: body.idempotencyKey,
-      created_at: createdAt,
-      updated_at: createdAt,
-      status_updated_at: createdAt,
-      items: resolved,
-    });
+    // Cloud sync to MongoDB Atlas — awaited before responding
+    try {
+      await mongoUpsert("pre_orders", {
+        id: insertedId,
+        reference,
+        tracking_token: trackingToken,
+        user_id: req.user?.id ?? null,
+        is_guest: req.user ? 0 : 1,
+        first_name: body.customer.firstName,
+        last_name: body.customer.lastName,
+        phone: body.customer.phone,
+        phone_normalized: phoneNormalized,
+        address: body.customer.address,
+        city: body.customer.city,
+        kite_size: body.preferences?.kiteSize ?? "",
+        kite_type: body.preferences?.kiteType ?? "",
+        dor_type: body.preferences?.dorType ?? "",
+        brand_name: body.preferences?.brandName ?? "",
+        order_note: body.note ?? "",
+        status: "pending",
+        subtotal_pkr: subtotalPkr,
+        price_status: allPriced ? "ok" : "tbc",
+        items_count: itemsCount,
+        terms_accepted: 1,
+        idempotency_key: body.idempotencyKey,
+        created_at: createdAt,
+        updated_at: createdAt,
+        status_updated_at: createdAt,
+        items: resolved,
+      });
+    } catch (err) {
+      console.warn("[MongoDB Atlas] Pre-order cloud save notice:", (err as Error).message);
+    }
 
     res.status(201).json({
       ok: true,
