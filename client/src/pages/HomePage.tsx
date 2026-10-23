@@ -105,29 +105,6 @@ export function HomePage() {
 
   return (
     <>
-      {/* Basant Festival Announcement Bar */}
-      <div className="relative z-10 overflow-hidden bg-gradient-to-r from-zinc-950 via-[#1b0933] to-zinc-950 py-2.5 text-white shadow-inner border-b border-white/5">
-        <div className="container-x flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-          <div className="flex items-center gap-2">
-            <span className="flex size-2 rounded-full bg-rose-500 animate-ping" />
-            <span className="rounded-full bg-rose-500/20 px-2.5 py-0.5 text-rose-300 ring-1 ring-rose-400/40 font-mono text-[11px] font-bold">
-              FESTIVAL 2026
-            </span>
-            <span className="hidden sm:inline font-display text-rose-100">
-              لاہور کی پہچان، بسنت کی اڑان — Authentic Kite &amp; Cotton Dor Pre-Orders Open
-            </span>
-            <span className="sm:hidden text-rose-200">Basant Lahore 2026 Pre-Orders Live!</span>
-          </div>
-          <Link
-            to="/shop"
-            className="group flex items-center gap-1 text-[11px] font-bold text-rose-400 hover:text-white transition-colors"
-          >
-            <span>Book Your Dor &amp; Kites</span>
-            <span className="transition-transform group-hover:translate-x-1">→</span>
-          </Link>
-        </div>
-      </div>
-
       {/* Hero Section with Centered Text, Animated Flying Kites & Dor Pinna Spools */}
       <section className="relative overflow-hidden border-b border-black/10 bg-[#0a0518] text-white">
         {/* Subtle Textured Backdrop with Night Sky & Purple Nebula Glows */}
@@ -333,7 +310,7 @@ export function HomePage() {
       </section>
 
       {/* Featured products */}
-      <section className="bg-mist/60 py-12 sm:py-16">
+      <section id="featured-products" className="scroll-mt-24 bg-mist/60 py-12 sm:py-16">
         <div className="container-x">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -345,7 +322,7 @@ export function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products === null
               ? Array.from({ length: 4 }, (_, index) => (
                   <div key={index} className="card overflow-hidden">

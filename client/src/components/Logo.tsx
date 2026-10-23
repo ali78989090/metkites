@@ -26,10 +26,10 @@ export function Logo({ className = "h-10", dark = false }: { className?: string;
         </svg>
       </div>
       <div className="flex flex-col text-left leading-none">
-        <span className={cn("font-display text-base font-black tracking-tight sm:text-lg", dark ? "text-white" : "text-zinc-950")}>
+        <span className={cn("font-display text-base font-black tracking-tight sm:text-lg whitespace-nowrap", dark ? "text-white" : "text-zinc-950")}>
           Metro Lahore <span className="text-rose-600">Kites</span>
         </span>
-        <span className="mt-0.5 font-sans text-[10px] font-bold tracking-wider text-rose-600/90 dark:text-rose-400">
+        <span className="mt-0.5 hidden sm:block whitespace-nowrap font-sans text-[10px] font-bold tracking-wider text-rose-600/90 dark:text-rose-400">
           لاہور بسنت 2026 · FESTIVAL HERITAGE
         </span>
       </div>

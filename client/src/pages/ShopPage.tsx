@@ -127,11 +127,14 @@ export function ShopPage() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => updateParam("category", "")}
-          className={cn("chip border", !category ? "border-brand bg-brand text-white" : "border-ink/15 bg-white text-ink/70 hover:border-ink/40")}
+          className={cn(
+            "chip border whitespace-nowrap px-3.5 py-1.5 text-xs font-bold transition-all",
+            !category ? "border-brand bg-brand text-white shadow-xs" : "border-ink/15 bg-white text-ink/75 hover:border-ink/40 hover:bg-mist",
+          )}
         >
           All
         </button>
@@ -141,8 +144,10 @@ export function ShopPage() {
             type="button"
             onClick={() => updateParam("category", item.slug === category ? "" : item.slug)}
             className={cn(
-              "chip border",
-              category === item.slug ? "border-brand bg-brand text-white" : "border-ink/15 bg-white text-ink/70 hover:border-ink/40",
+              "chip border whitespace-nowrap px-3.5 py-1.5 text-xs font-bold transition-all",
+              category === item.slug
+                ? "border-brand bg-brand text-white shadow-xs"
+                : "border-ink/15 bg-white text-ink/75 hover:border-ink/40 hover:bg-mist",
             )}
           >
             {item.name}

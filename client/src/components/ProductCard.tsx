@@ -33,11 +33,14 @@ export function ProductCard({ product }: { product: Product }) {
           alt={product.images[0]?.alt ?? product.name}
           className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span className="chip absolute left-2.5 top-2.5 backdrop-blur-md bg-white/90 text-xs font-bold text-ink/80 shadow-xs border border-white/60">
+        <span
+          title={product.categoryName}
+          className="absolute left-2.5 top-2.5 max-w-[70%] truncate whitespace-nowrap rounded-full border border-white/80 bg-white/95 px-2.5 py-0.5 text-[11px] font-bold text-ink/85 shadow-xs backdrop-blur-md"
+        >
           {product.categoryName}
         </span>
         {!product.available && (
-          <span className="chip absolute right-2.5 top-2.5 bg-black/85 text-xs font-bold text-white shadow-xs">
+          <span className="chip absolute right-2.5 top-2.5 whitespace-nowrap bg-black/85 text-[11px] font-bold text-white shadow-xs">
             Unavailable
           </span>
         )}
@@ -45,12 +48,12 @@ export function ProductCard({ product }: { product: Product }) {
 
       <div className="flex flex-1 flex-col gap-3 pt-3.5">
         <div>
-          <h3 className="font-display text-base font-bold leading-tight tracking-tight sm:text-lg">
+          <h3 className="font-display text-base font-bold leading-tight tracking-tight sm:text-lg min-h-[2.5rem] line-clamp-2">
             <Link to={`/product/${product.slug}`} className="text-ink transition-colors group-hover:text-brand">
               {product.name}
             </Link>
           </h3>
-          <p className="mt-1 text-xs font-semibold text-ink/45">
+          <p className="mt-1 text-xs font-semibold text-ink/45 truncate">
             {product.brandName} · {product.unitLabel}
           </p>
         </div>

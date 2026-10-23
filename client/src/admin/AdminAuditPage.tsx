@@ -115,13 +115,16 @@ export function AdminAuditPage() {
     api<{ ok: true; tables: TableSummary[] }>("/api/admin/audit/tables")
       .then((res) => {
         setTables(res.tables);
-        if (res.tables.length > 0 && !res.tables.some((t) => t.name === selectedTable)) {
-          setSelectedTable(res.tables[0].name);
-        }
+        setSelectedTable((current) => {
+          if (res.tables.length > 0 && !res.tables.some((t) => t.name === current)) {
+            return res.tables[0].name;
+          }
+          return current;
+        });
       })
       .catch((err) => push(err instanceof ApiError ? err.message : "Failed to load database tables.", "error"))
       .finally(() => setTableLoading(false));
-  }, [selectedTable, push]);
+  }, [push]);
 
   // Fetch Table Data
   const loadTableData = useCallback(() => {
