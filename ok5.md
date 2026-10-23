@@ -66,3 +66,30 @@ In this update, the following key features and fixes were implemented, verified,
 3. **Cart & Certificate WhatsApp Number Updated**:
    - Updated Cart Page ([client/src/pages/CartPage.tsx](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/client/src/pages/CartPage.tsx)) and Certificate section ([client/src/pages/HomePage.tsx](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/client/src/pages/HomePage.tsx)) to route inquiries directly to `+923262577880`.
 
+---
+
+## 5. MongoDB Atlas Cloud Database Integration
+
+1. **Cloud Database Provisioning**:
+   - Cluster: `Cluster0` (`cluster0.av2ofo2.mongodb.net`)
+   - Database: `metrolahorekites`
+   - User: `ali78989090_db_user`
+   - Network Access: `0.0.0.0/0` (Allowed from all origins including Vercel serverless)
+
+2. **Data Migration Completed**:
+   - Migrated all SQLite data to MongoDB Atlas collections:
+     - `users`: Admin account (`ebad@gmail.com`)
+     - `categories`: 5 categories
+     - `brands`: 1 brand
+     - `products`: 8 products
+     - `product_variants`: 22 variants
+     - `product_images`: 8 images
+     - `settings`: 22 system settings
+   - Migration script available at `server/src/scripts/migrate-sqlite-to-mongo.ts` (runnable with `npm run db:migrate:mongo -w server`).
+
+3. **Live Serverless Cloud Sync**:
+   - Application automatically connects to MongoDB Atlas using [server/src/lib/mongo.ts](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/server/src/lib/mongo.ts).
+   - Any new customer pre-order submitted via the website is instantly synchronized to MongoDB Atlas in the cloud.
+   - Vercel serverless containers automatically restore data from MongoDB Atlas upon fresh startup.
+
+

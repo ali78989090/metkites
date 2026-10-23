@@ -58,6 +58,10 @@ export const config = {
         ? ":memory:"
         : defaultDbPath,
 
+  mongoUri:
+    env.MONGODB_URI ||
+    "mongodb+srv://ali78989090_db_user:vWSRCV5sTlKOt9lu@cluster0.av2ofo2.mongodb.net/metrolahorekites?retryWrites=true&w=majority",
+
   uploadsDir:
     env.UPLOADS_DIR && env.UPLOADS_DIR !== ":memory:"
       ? path.resolve(repoRoot, env.UPLOADS_DIR)

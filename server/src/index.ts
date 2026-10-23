@@ -2,6 +2,9 @@ import { buildApp } from "./app.js";
 import { config } from "./env.js";
 import { db } from "./db.js";
 import { seedAll } from "./lib/seed.js";
+import { initMongo } from "./lib/mongo.js";
+
+void initMongo();
 
 const admin = seedAll();
 
