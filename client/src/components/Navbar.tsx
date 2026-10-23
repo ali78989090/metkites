@@ -8,7 +8,6 @@ import { cn } from "../lib/format";
 const links = [
   { to: "/", label: "Home", end: true },
   { to: "/shop", label: "Shop Kites" },
-  { to: "/shop?category=kite-dor-kits", label: "Kite & Dor Kits" },
   { to: "/how-pre-orders-work", label: "How Pre-Orders Work" },
   { to: "/contact", label: "Contact" },
   { to: "/track", label: "Track Order" },

@@ -47,4 +47,22 @@ In this update, the following key features and fixes were implemented, verified,
 ## 3. Git Commit History
 
 - `1895c4f`: Implement serverless HMAC session verification for admin routes and add WhatsApp button to cart (+923262577882)
-- Current commit: Style home page action buttons and embed official government registration certificate LC.png
+- `9ace4bf`: Style home page action buttons and embed official government registration certificate LC.png
+- Current: Remove Kite & Dor Kits from navbar, add direct WhatsApp order button (+923262577880) to product cards, product page, cart, and certificate verification
+
+---
+
+## 4. Latest Refinements (Navbar & WhatsApp Integration)
+
+1. **Navbar Streamlined**:
+   - Removed `Kite & Dor Kits` navigation link from desktop navbar and mobile drawer in [client/src/components/Navbar.tsx](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/client/src/components/Navbar.tsx).
+   - Keeps clean, focused navigation: `Home`, `Shop Kites`, `How Pre-Orders Work`, `Contact`, `Track Order`.
+
+2. **Direct WhatsApp Ordering on Product Cards**:
+   - Added an emerald green **"WhatsApp Order"** button to every product card in [client/src/components/ProductCard.tsx](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/client/src/components/ProductCard.tsx).
+   - Automatically opens WhatsApp to `+923262577880` (`https://wa.me/923262577880`) with the product name, selected variant/size, and quantity pre-filled.
+   - Also added to [client/src/pages/ProductPage.tsx](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/client/src/pages/ProductPage.tsx).
+
+3. **Cart & Certificate WhatsApp Number Updated**:
+   - Updated Cart Page ([client/src/pages/CartPage.tsx](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/client/src/pages/CartPage.tsx)) and Certificate section ([client/src/pages/HomePage.tsx](file:///c:/Users/IDS%20EDITOR%202/Desktop/metrolahorekites/client/src/pages/HomePage.tsx)) to route inquiries directly to `+923262577880`.
+

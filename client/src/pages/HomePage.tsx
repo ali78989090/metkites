@@ -424,7 +424,7 @@ export function HomePage() {
                     View Full Certificate 📄
                   </a>
                   <a
-                    href="https://wa.me/923262577882?text=Salam!%20I%20would%20like%20to%20verify%20the%20Govt%20Registration%20Certificate%20(Reg:%20198782-09092026)."
+                    href="https://wa.me/923262577880?text=Salam!%20I%20would%20like%20to%20verify%20the%20Govt%20Registration%20Certificate%20(Reg:%20198782-09092026)."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-outline flex items-center gap-2 border-emerald-500/30 text-emerald-700 hover:bg-emerald-50 text-xs font-bold py-2.5"
